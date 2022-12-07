@@ -150,8 +150,6 @@ struct RangeGCDQuery {
 };
 
 }  // namespace monoid
-// g++ -std=c++17 A.cpp -o A  && timeout 4s ./A<input.in>output.out
-// https://github.com/online-judge-tools/verification-helper/blob/master/README.md
 void solve() {
   int n;
   std::cin >> n >> mod;
@@ -163,7 +161,7 @@ void solve() {
       return a * b % mod;
     }
   };
-  
+
   SegmentTree<RangeProductQuery> tr(n + 1);
   for (int i = 1; i <= n; i++) {
     int op, m;
