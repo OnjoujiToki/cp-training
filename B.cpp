@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <bitset>
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
@@ -13,70 +15,65 @@
 #include <map>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <set>
-#include <sstream>
-#include <stack>
-#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
-#include <vector>
 
-void solve() {
-  int n;
-  std::cin >> n;
-  std::string s;
-  std::cin >> s;
-  std::vector l(n + 1, 0);
-  std::vector r(n + 1, 0);
-  for (int i = 0; i < n; i++) {
-    l[i + 1] = l[i] + (s[i] == 'L');
-    r[i + 1] = r[i] + (s[i] == 'R');
-  }
-
-  for (int i = 0; i < n; i++) {
-    if (r[i] == 0 and l.back() - l[i + 1] == 0) {
-      bool ok1 = false, ok2 = false;
-      if (i) {
-        int R1 = r[i], L1 = l.back() - l[i + 1];
-        int R2 = r[i - 1], L2 = l.back() - l[i];
-        R2 += s[i] == 'R';
-        L2 -= s[i] == 'L';
-        L1 += s[i - 1] == 'L';
-        R1 -= s[i - 1] == 'R';
-        if ((R2 or L2) and (L1 or R1)) ok1 = true;
-      }
-
-      if (i < n - 1) {
-        int R1 = r[i + 1], L1 = l.back() - l[i + 2];
-        int R2 = r[i], L2 = l.back() - l[i + 1];
-
-        R2 += s[i + 1] == 'R';
-        L2 -= s[i + 1] == 'L';
-        L1 += s[i] == 'L';
-        R1 -= s[i] == 'R';
-        if ((R2 or L2) and (L1 or R1)) ok2 = true;
-      }
-      if (ok1) {
-        std::cout << 1 + i - 1 << '\n';
-        return;
-      } else if (ok2) {
-        std::cout << i + 1 << '\n';
-        return;
-      } else {
-        std::cout << -1 << '\n';
-        return;
-      }
+std::vector<bool> prime_table(int n) {
+  std::vector<bool> prime(n + 1, true);
+  if (n >= 0) prime[0] = false;
+  if (n >= 1) prime[1] = false;
+  for (int i = 2; i * i <= n; i++) {
+    if (!prime[i]) continue;
+    for (int j = i * i; j <= n; j += i) {
+      prime[j] = false;
     }
   }
-  std::cout << 0 << '\n';
+  return prime;
+}
+
+std::vector<int> add(std::vector<int> &A, std::vector<int> &B) {
+  std::vector<int> C;
+  int t = 0;
+  for (int i = 0; i < A.size() || i < B.size(); i++) {
+    if (i < A.size()) t += A[i];
+    if (i < B.size()) t += B[i];
+    C.push_back(t % 10);
+    t /= 10;  // 进位
+  }
+  if (t) C.push_back(1);  // 如果还有进位
+  return C;
+}
+
+void solve() {
+  std::string a;
+  std::cin >> a;
+  std::vector<int> A;
+  for (int i = a.size() - 1; i >= 0; i--) {
+    A.push_back(a[i] - '0');
+  }
+  int n = a.size();
+  std::vector<int> ans = {0};
+  // k == 0 for all, k ==  1 for n - 1, k == n for 0 ...
+  // max k is n!
+  //
+  for (int i = n; i >= 1; i--) {
+    std::vector<int> B;
+    for (int j = i - 1; j >= 0; j--) {
+      // std::cout << a[j] - '0';
+      B.push_back(a[j] - '0');
+    }
+    // std::cout << '\n';
+    ans = add(ans, B);
+  }
+  for (int i = ans.size() - 1; i >= 0; i--) {
+    std::cout << ans[i];
+  }
 }
 int main() {
   std::cin.tie(nullptr);
-  std::ios::sync_with_stdio(false);
   int t = 1;
-  std::cin >> t;
+
   while (t--) solve();
   // solve();
   return 0;

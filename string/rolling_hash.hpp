@@ -1,8 +1,4 @@
-/**
- * @brief Rolling-Hash(ローリングハッシュ)
- * @see https://qiita.com/keymoon/items/11fac5627672a6d6a9f6
- * @docs docs/rolling-hash.md
- */
+
 struct RollingHash {
   static const uint64_t mod = (1ull << 61ull) - 1;
   using uint128_t = __uint128_t;
@@ -20,8 +16,9 @@ struct RollingHash {
   }
 
   static inline uint64_t generate_base() {
-    mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
-    uniform_int_distribution<uint64_t> rand(1, RollingHash::mod - 1);
+    std::mt19937_64 mt(
+        std::chrono::steady_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<uint64_t> rand(1, RollingHash::mod - 1);
     return rand(mt);
   }
 
@@ -40,7 +37,7 @@ struct RollingHash {
 
   std::vector<uint64_t> build(const std::string &s) const {
     int sz = s.size();
-    vector<uint64_t> hashed(sz + 1);
+    std::vector<uint64_t> hashed(sz + 1);
     for (int i = 0; i < sz; i++) {
       hashed[i + 1] = add(mul(hashed[i], base), s[i]);
     }
@@ -69,7 +66,7 @@ struct RollingHash {
 
   int lcp(const std::vector<uint64_t> &a, int l1, int r1,
           const std::vector<uint64_t> &b, int l2, int r2) {
-    int len = min(r1 - l1, r2 - l2);
+    int len = std::min(r1 - l1, r2 - l2);
     int low = 0, high = len + 1;
     while (high - low > 1) {
       int mid = (low + high) / 2;

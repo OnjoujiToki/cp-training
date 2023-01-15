@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <bitset>
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
@@ -13,15 +15,19 @@
 #include <map>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <set>
-#include <sstream>
-#include <stack>
-#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
-#include <vector>
+long long mod_pow(long long x, int n, int p) {
+  long long ret = 1;
+  while (n) {
+    if (n & 1) (ret *= x) %= p;
+    (x *= x) %= p;
+    n >>= 1;
+  }
+  return ret;
+}
+
 template <typename T>
 struct DSU {
   std::vector<T> f, siz;
@@ -42,35 +48,32 @@ struct DSU {
   T size(int x) { return siz[leader(x)]; }
 };
 void solve() {
-  int n, m;
-  std::cin >> n >> m;
-  std::vector d(n, 0);
+  int n;
+  std::cin >> n;
+  std::vector<int> a(n + 1);
+  for (int i = 1; i <= n; i++) {
+    std::cin >> a[i];
+  }
+  n *= 2;
+  for (int i = 1; i <= n / 2; i++) {
+    a.push_back(a[i]);
+  }
 
-  DSU<int> dsu(n);
-  for (int i = 0; i < m; i++) {
-    int u, v;
-    std::cin >> u >> v;
-    u--, v--;
-    if (dsu.same(u, v)) {
-      std::cout << "No\n";
-      return;
+  std::vector<std::vector<int>> dp(n + 1, std::vector<int>(2));
+  for (int i = 1; i <= n; i++) {
+    for (int j = 1; j < i; j++) {
+      if (j < n / 2) dp[i][0] = std::max(dp[i][0], dp[j][1] + a[i - j]);
+      dp[i][0] = std::max(dp[i][0], dp[j][1] + a[i - j]);
     }
-    dsu.merge(u, v);
-    d[u]++, d[v]++;
+    if (i) dp[i][1] = std::max(dp[i - 1][0], dp[i - 1][1]);
   }
-  for (int i = 0; i < n; i++) {
-    if (d[i] > 2) {
-      std::cout << "No" << '\n';
-      return;
-    }
-  }
-  std::cout << "Yes\n";
+  std::cout << std::max(dp[n][0], dp[n][1]);
+
 }
 int main() {
   std::cin.tie(nullptr);
-  std::ios::sync_with_stdio(false);
   int t = 1;
-  // std::cin >> t;
+
   while (t--) solve();
   // solve();
   return 0;
