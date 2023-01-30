@@ -76,7 +76,10 @@ struct MComb {
     for (int i = n - 1; i >= 0; i--)
       inversed[i] = inversed[i + 1] * mint(i + 1);
   }
-  mint ncr(int n, int r) { return (fact[n] * inversed[r] * inversed[n - r]); }
+  mint ncr(int n, int r) {
+    if (n < r) return 0;
+    return (fact[n] * inversed[r] * inversed[n - r]);
+  }
   mint npr(int n, int r) { return (fact[n] * inversed[n - r]); }
   mint nhr(int n, int r) {
     assert(n + r - 1 < (int)fact.size());

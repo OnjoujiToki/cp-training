@@ -1,8 +1,9 @@
 #include <algorithm>
 #include <vector>
-std::vector<int> get_divisors(int x, bool sorted = true) {
-  std::vector<int> res;
-  for (int i = 1; i <= x / i; i++)
+template <typename T>
+std::vector<T> get_divisors(T x, bool sorted = true) {
+  std::vector<T> res;
+  for (T i = 1; i <= x / i; i++)
     if (x % i == 0) {
       res.push_back(i);
       if (i != x / i) res.push_back(x / i);
