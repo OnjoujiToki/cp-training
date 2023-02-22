@@ -94,6 +94,21 @@ mint ncr(int n, int r) {
   return res;
 }
 
+int noinit = 1;
+long long memo[2005][2005];
+long long nCr(long long n, long long r) {
+  if (noinit) {
+    for (int i = 0; i < 2005; i++) {
+      for (int j = 0; j < 2005; j++) {
+        memo[i][j] = -1;
+        noinit = 0;
+      }
+    }
+  }
+  if (r == 0 || n == r) return 1;
+  if (0 <= memo[n][r]) return memo[n][r];
+  return memo[n][r] = nCr(n - 1, r - 1) + nCr(n - 1, r);
+}
 /*
 mint res = (mint(2) ^ n) - 1 - ncr(n, a) - ncr(n, b);
 std::cout << res << std::endl;

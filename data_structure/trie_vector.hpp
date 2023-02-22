@@ -34,7 +34,6 @@ struct Tri {
     for (int i = 0; i < (int)word.size(); i++) {
       int c = word[i] - base;
       int &next_id = nodes[node_id].next[c];
-
       if (next_id == -1) {  // 次の頂点が存在しなければ終了
         break;
       }

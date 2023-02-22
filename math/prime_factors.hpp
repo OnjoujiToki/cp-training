@@ -60,3 +60,21 @@ std::pair<std::vector<long long>, std::vector<int>> get_prime_factor_with_kinds(
   assert(prime_factors.size() == cnt.size());
   return {prime_factors, cnt};
 }
+
+std::vector<int> fast_prime_factorization(int n) {
+  std::vector<int> divisor(n + 1);
+  divisor[0] = -1;
+  divisor[1] = 1;
+  // divisor[x] stands for the smallest prime number which divides x
+  // x != 0 && x != 1
+  long long i = 2;
+  for (; i * i <= n; i++)
+    if (!divisor[i]) {
+      divisor[i] = i;
+      for (long long j = i * i; j <= n; j += i)
+        if (!divisor[j]) divisor[j] = i;
+    }
+  for (; i <= n; i++)
+    if (!divisor[i]) divisor[i] = i;
+  return divisor;
+}
