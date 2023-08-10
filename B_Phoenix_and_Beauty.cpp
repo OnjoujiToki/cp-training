@@ -83,6 +83,33 @@ struct ModInt {
   }
 };
 
+long long mod_pow(long long x, int n, int p) {
+  long long ret = 1;
+  while (n) {
+    if (n & 1) (ret *= x) %= p;
+    (x *= x) %= p;
+    n >>= 1;
+  }
+  return ret;
+}
+std::pair<std::vector<long long>, std::vector<int>> get_prime_factor_with_kinds(
+    long long n) {
+  std::vector<long long> prime_factors;
+  std::vector<int> cnt;  // number of i_th factor
+  for (long long i = 2; i <= sqrt(n); i++) {
+    if (n % i == 0) {
+      prime_factors.push_back(i);
+      cnt.push_back(0);
+      while (n % i == 0) n /= i, cnt[(int)prime_factors.size() - 1]++;
+    }
+  }
+  if (n > 1) prime_factors.push_back(n), cnt.push_back(1);
+  assert(prime_factors.size() == cnt.size());
+  return {prime_factors, cnt};
+}
+using mint = ModInt<1000000007>;
+// using mint = ModInt<998244353>;
+
 template <typename T>
 struct SegmentTree {
   using Monoid = typename T::Monoid;
@@ -150,82 +177,39 @@ struct RangeSumQuery {
 };
 
 }  // namespace monoid
-template <typename T>
-struct DSU {
-  std::vector<T> f, siz;
-  DSU(int n) : f(n), siz(n, 1) { std::iota(f.begin(), f.end(), 0); }
-  T leader(T x) {
-    while (x != f[x]) x = f[x] = f[f[x]];
-    return x;
-  }
-  bool same(T x, T y) { return leader(x) == leader(y); }
-  bool merge(T x, T y) {
-    x = leader(x);
-    y = leader(y);
-    if (x == y) return false;
-    siz[x] += siz[y];
-    f[y] = x;
-    return true;
-  }
-  T size(int x) { return siz[leader(x)]; }
-};
 void solve() {
-  int n, m;
-  std::cin >> n >> m;
+  int n, k;
+  std::cin >> n >> k;
+  std::set<int> s;
+  std::vector<int> a(n);
+  for (int &x : a) {
+    std::cin >> x;
+    s.insert(x);
+  }
+  if (s.size() > k) {
+    std::cout << -1 << '\n';
+    return;
+  }
 
-  int sx, sy;
-  int tx, ty;
-  std::vector<std::string> grid(n);
-  for (auto &c : grid) std::cin >> c;
-
-  std::vector<std::vector<std::pair<int, int>>> connect(26);
-  std::array<int, 5> dx = {0, 1, 0, -1, 0};
-  std::vector<std::vector<int>> dist(n, std::vector<int>(m, 1e8));
+  std::vector<int> ans;
   for (int i = 0; i < n; i++) {
-    for (int j = 0; j < m; j++) {
-      if (grid[i][j] == 'S') {
-        sx = i, sy = j;
-        grid[i][j] = '.';
-      }
-      if (grid[i][j] == 'G') {
-        tx = i, ty = j;
-        grid[i][j] = '.';
-      }
-      if (grid[i][j] >= 'a' and grid[i][j] <= 'z') {
-        connect[grid[i][j] - 'a'].emplace_back(i, j);
-      }
+    for (int x : s) {
+      ans.push_back(x);
     }
+    ans.push_back(1);
   }
-  std::cout << sx << ' ' << sy << '\n';
-  std::queue<std::tuple<int, int, int>> q;
-  q.emplace(sx, sy, 0);
-  dist[sx][sy] = 0;
-  while (!q.empty()) {
-    auto [x, y, d] = q.front();
-    q.pop();
-
-    for (int k = 0; k < 4; k++) {
-      int nx = x + dx[k], ny = y + dx[k + 1];
-      if (nx < n and ny < m and nx >= 0 and ny >= 0 and grid[x][y] != '#') {
-        if (dist[nx][ny] == 1e8) q.emplace(nx, ny, d + 1);
-      }
-    }
-    if (grid[x][y] >= 'a' and grid[x][y] <= 'z') {
-      for (auto [nx, ny] : connect[grid[x][y] - 'a']) {
-        if (nx == x and ny == y) continue;
-        if (dist[nx][ny] == 1e8) q.emplace(nx, ny, d + 1);
-      }
-    }
-  }
-  if (dist[tx][ty] == 1e8) dist[tx][ty] = -1;
-  std::cout << dist[tx][ty] << '\n';
+  int m = ans.size();
+  std::cout << m << '\n';
+  for (int x : ans) std::cout << x << ' ';
+  std::cout << '\n';
 }
 
 int main() {
   std::ios::sync_with_stdio(false);
   std::cin.tie(nullptr);
-  int t = 1;
 
+  int t = 1;
+  std::cin >> t;
   while (t--) solve();
   return 0;
 }
