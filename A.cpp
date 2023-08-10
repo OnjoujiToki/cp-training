@@ -270,14 +270,37 @@ struct scc_graph {
   };
   std::vector<std::pair<int, edge>> edges;
 };
+std::pair<long long, long long> exgcd(long long a, long long b) {
+  if (b == 0) {
+    return std::make_pair(1LL, 0LL);
+  } else {
+    std::pair<long long, long long> ans = exgcd(b, a % b);
+    swap(ans.first, ans.second);
+    ans.second -= ans.first * (a / b);
+    return ans;
+  }
+}
+long long func(long long a, long long b, long long mod) {
+  auto [x, y] = exgcd(a, mod);
+  auto d = std::gcd(a, mod);
+  if (b % d) return -1LL;
+  long long t = b / d;
 
+  return (x * t % (mod / d) + (mod / d)) % (mod / d);
+}
 void solve() {
   int t;
   std::cin >> t;
   while (t--) {
     long long n, s, k;
     std::cin >> n >> s >> k;
-    }
+    // ax===b(mod m)
+    // equals to ax + my = b
+    // kx === -s mod n
+
+    // a = k, b = -s, mod = n
+    std::cout << func(k, -s, n) << '\n';
+  }
 }
 
 int main() {
