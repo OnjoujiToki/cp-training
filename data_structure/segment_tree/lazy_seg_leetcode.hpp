@@ -1,3 +1,4 @@
+// credit: emthrm.github.io/library
 template <typename T>
 struct LazySegmentTree {
   using Monoid = typename T::Monoid;
