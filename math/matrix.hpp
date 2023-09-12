@@ -76,7 +76,7 @@ struct Matrix {
       *this *= *this;
       k >>= 1LL;
     }
-    A.swap(B, A);
+    A.swap(B.A);
     return (*this);
   }
 
