@@ -63,5 +63,5 @@ struct DoublingLowestCommonAncestor {
         dfs(to.first, idx, d + 1);
       }
     }
-  }
+    }
 };
