@@ -1,5 +1,3 @@
-#pragma once
-#include <cassert>
 template <typename T>
 struct FenwickTree {
   std::vector<T> bit;
@@ -7,7 +5,7 @@ struct FenwickTree {
   FenwickTree(int _n) : n(_n), bit(_n) {}
 
   T sum(int r) {
-    int ret = 0;
+    T ret = 0;
     for (; r >= 0; r = (r & (r + 1)) - 1) ret += bit[r];
     return ret;
   }
@@ -17,7 +15,7 @@ struct FenwickTree {
     return sum(r) - sum(l - 1);
   }  // [l, r]
 
-  void add(int idx, int delta) {
+  void add(int idx, T delta) {
     for (; idx < n; idx = idx | (idx + 1)) bit[idx] += delta;
   }
 };
