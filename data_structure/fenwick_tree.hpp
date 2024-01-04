@@ -18,5 +18,5 @@ struct FenwickTree {
   void add(int idx, T delta) {
     for (; idx < n; idx = idx | (idx + 1)) bit[idx] += delta;
   }
-  void set(int idx, T val) { add(idx, val - bit[idx]); }
+  void set(int idx, T val) { add(idx, val - sum(idx, idx)); }
 };
