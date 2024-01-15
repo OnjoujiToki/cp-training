@@ -54,6 +54,7 @@ struct RollingHash {
     return hashed;
   }
 
+  // [l, r)
   uint64_t query(const std::vector<uint64_t> &s, int l, int r) {
     expand(r - l);
     return add(s[r], mod - mul(s[l], power[r - l]));
