@@ -38,3 +38,15 @@ vector<int> r(int n) {
   for (int i = 0; i < n; ++i) w.push_back(rand() % 10);
   return w;
 }
+
+/*
+
+    //vector<int> a = {1,2,3};
+        //vector<int> b = {5,0,20,500};
+        //vector<int> r = karatsuba(a, b);
+        vector<int> a = r(200123), b = r(200123);
+        //~ vector<int> a = r(500123), b = r(5817);
+        vector<int> r = karatsuba(a, b);
+        for(int i = 0; i < min(10, (int) r.size()); ++i) cout << r[i] << " ";
+        cout << "\n";
+*/
