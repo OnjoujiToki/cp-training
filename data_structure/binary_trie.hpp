@@ -1,3 +1,4 @@
+
 template <int B = 32, typename T = std::uint32_t>
 struct BinaryTrie {
   struct Node {

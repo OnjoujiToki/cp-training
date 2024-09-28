@@ -1,0 +1,102 @@
+#include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <numeric>
+#include <random>
+#include <vector>
+
+int lomutoComparisons = 0;
+int lomutoSwaps = 0;
+
+int lomutoPartition(std::vector<int>& arr, int low, int high) {
+  int pivot = arr[high];
+  int i = (low - 1);
+
+  for (int j = low; j <= high - 1; j++) {
+    lomutoComparisons++;  // Increment comparison count
+    // If current element is smaller than or equal to pivot
+    if (arr[j] <= pivot) {
+      i++;  // Increment index of smaller element
+      std::swap(arr[i], arr[j]);
+      lomutoSwaps++;  // Increment swap count
+    }
+  }
+
+  std::swap(arr[i + 1], arr[high]);
+
+  return (i + 1);
+}
+
+void quickSortLomuto(std::vector<int>& arr, int low, int high) {
+  if (low < high) {
+    int pi = lomutoPartition(arr, low, high);
+
+    quickSortLomuto(arr, low, pi - 1);
+    quickSortLomuto(arr, pi + 1, high);
+  }
+}
+
+int hoareComparisons = 0;
+int hoareSwaps = 0;
+int hoarePartition(std::vector<int>& arr, int low, int high) {
+  int pivot = arr[low];
+  int i = low - 1, j = high + 1;
+
+  while (true) {
+    // Find leftmost element greater than or equal to pivot
+    do i++, hoareComparisons++;
+    while (arr[i] < pivot);
+
+    do j--, hoareComparisons++;
+    while (arr[j] > pivot);
+
+    hoareComparisons -= 2;
+    if (i >= j) return j;
+    hoareSwaps++;
+    std::swap(arr[i], arr[j]);
+  }
+}
+
+void quickSortHoare(std::vector<int>& arr, int low, int high) {
+  if (low < high) {
+    int pi = hoarePartition(arr, low, high);
+
+    quickSortHoare(arr, low, pi);
+    quickSortHoare(arr, pi + 1, high);
+  }
+}
+
+int main() {
+  int n = 1000;
+  std::vector<int> perm(n);
+  std::iota(perm.begin(), perm.end(), 1);
+
+  std::vector<std::vector<int>> p1(10000), p2(10000);
+  for (int i = 0; i < 10000; i++) {
+    std::vector<int> arr = perm;
+    std::shuffle(arr.begin(), arr.end(), std::mt19937(std::random_device()()));
+    p1[i] = arr;
+    p2[i] = arr;
+  }
+  auto startLomuto = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < 10000; i++) {
+    quickSortLomuto(p1[i], 0, n - 1);
+  }
+  auto endLomuto = std::chrono::high_resolution_clock::now();
+  auto durationLomuto = endLomuto - startLomuto;
+  std::cout << "Lomuto QuickSort On 10000 Permutations of n = 1000 took "
+            << durationLomuto.count() << " milliseconds.\n";
+  std::cout << "Comparisons and Swaps for Lomuto: " << lomutoComparisons << ", "
+            << lomutoSwaps << std::endl;
+  auto startHoare = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < 10000; i++) {
+    quickSortHoare(p2[i], 0, n - 1);
+  }
+  auto endHoare = std::chrono::high_resolution_clock::now();
+  auto durationHoare = endHoare - startHoare;
+  std::cout << "Hoare QuickSort On 10000 Permutations of n = 1000 took "
+            << durationHoare.count() << " milliseconds.\n";
+  std::cout << "Comparisons and Swaps for Hoare: " << hoareComparisons << ", "
+            << hoareSwaps << std::endl;
+  return 0;
+}

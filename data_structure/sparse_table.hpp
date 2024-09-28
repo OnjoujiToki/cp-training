@@ -39,5 +39,5 @@ struct SparseTable {
 };
 
 SparseTable<int> dst(a, [](const int a, const int b) -> int {
-  return std::min(a, b);
+  return std::max(a, b);
 });
