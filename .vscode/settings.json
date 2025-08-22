@@ -103,6 +103,9 @@
     "__tuple": "cpp",
     "ios": "cpp",
     "locale": "cpp",
-    "__memory": "cpp"
+    "__memory": "cpp",
+    "__verbose_abort": "cpp",
+    "execution": "cpp",
+    "print": "cpp"
   }
 }

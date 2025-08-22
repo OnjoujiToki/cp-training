@@ -1,139 +1,144 @@
-
 template <int B = 32, typename T = std::uint32_t>
 struct BinaryTrie {
   struct Node {
-    std::array<std::shared_ptr<Node>, 2> nxt;
-    int child;
-
+    Node* nxt[2];
+    int child;                       // # elements in this subtree
     Node() : nxt{nullptr, nullptr}, child(0) {}
   };
 
-  std::shared_ptr<Node> root;
+  Node* root;
 
   BinaryTrie() : root(nullptr) {}
 
-  void clear() { root.reset(); }
-
-  bool empty() const { return !root; }
-
-  int size() const { return root ? root->child : 0; }
-
-  void erase(const T& x) {
-    if (root) [[likely]]
-      erase(&root, x, B - 1);
+  void clear() {   
+    root = nullptr;
   }
 
-  std::shared_ptr<Node> find(const T& x) const {
-    if (!root) [[unlikely]]
-      return nullptr;
-    std::shared_ptr<Node> node = root;
+  bool empty() const { return root == nullptr; }
+  int  size()  const { return root ? root->child : 0; }
+
+  Node* insert(const T& x) {
+    if (!root) root = new Node();
+    Node* node = root;
+    ++node->child;
     for (int b = B - 1; b >= 0; --b) {
-      const bool digit = x >> b & 1;
-      if (!node->nxt[digit]) return nullptr;
-      node = node->nxt[digit];
+      const bool d = (x >> b) & 1;
+      if (!node->nxt[d]) node->nxt[d] = new Node();
+      node = node->nxt[d];
+      ++node->child;
     }
     return node;
   }
 
-  std::pair<std::shared_ptr<Node>, T> operator[](const int n) const {
-    return find_nth(n, 0);
-  }
-
-  std::pair<std::shared_ptr<Node>, T> find_nth(int n, const T& x) const {
-    assert(0 <= n && n < size());
-    std::shared_ptr<Node> node = root;
-    T res = 0;
+  void erase(const T& x) {
+    if (!root) return;
+    Node* node = root;
     for (int b = B - 1; b >= 0; --b) {
-      bool digit = x >> b & 1;
-      const int l_child = (node->nxt[digit] ? node->nxt[digit]->child : 0);
-      if (n >= l_child) {
-        n -= l_child;
-        digit = !digit;
-      }
-      node = node->nxt[digit];
-      if (digit) res |= static_cast<T>(1) << b;
+      const bool d = (x >> b) & 1;
+      if (!node->nxt[d]) return;     
+      node = node->nxt[d];
     }
-    return {node, res};
+    erase_counts(root, x, B - 1);
+    if (root && root->child == 0) root = nullptr;  
   }
 
-  std::shared_ptr<Node> insert(const T& x) {
-    if (!root) [[unlikely]]
-      root = std::make_shared<Node>();
-    std::shared_ptr<Node> node = root;
-    ++node->child;
+  Node* find(const T& x) const {
+    if (!root) return nullptr;
+    Node* node = root;
     for (int b = B - 1; b >= 0; --b) {
-      const bool digit = x >> b & 1;
-      if (!node->nxt[digit]) node->nxt[digit] = std::make_shared<Node>();
-      node = node->nxt[digit];
-      ++node->child;
+      const bool d = (x >> b) & 1;
+      if (!node->nxt[d]) return nullptr;
+      node = node->nxt[d];
     }
     return node;
   }
 
   int less_than(const T& x) const {
     int res = 0;
-    std::shared_ptr<Node> node = root;
+    Node* node = root;
     for (int b = B - 1; node && b >= 0; --b) {
-      const bool digit = x >> b & 1;
-      if (digit && node->nxt[0]) res += node->nxt[0]->child;
-      node = node->nxt[digit];
+      const bool d = (x >> b) & 1;
+      if (d && node->nxt[0]) res += node->nxt[0]->child;
+      node = node->nxt[d];
     }
     return res;
   }
 
-  int count(const T& l, const T& r) const {
-    return less_than(r) - less_than(l);
-  }
+  int count(const T& l, const T& r) const { return less_than(r) - less_than(l); }
 
   int count(const T& x) const {
-    const std::shared_ptr<Node> ptr = find(x);
-    return ptr ? ptr->child : 0;
+    Node* p = find(x);
+    return p ? p->child : 0;
   }
 
-  std::pair<std::shared_ptr<Node>, std::optional<T>> lower_bound(
-      const T& x) const {
-    const int lt = less_than(x);
-    if (lt == size()) return std::make_pair(nullptr, std::nullopt);
-    const auto [node, value] = find_nth(lt, 0);
-    return std::make_pair(node, std::make_optional(value));
-  }
+  std::pair<Node*, T> operator[](int n) const { return find_nth(n, 0); }
 
-  std::pair<std::shared_ptr<Node>, std::optional<T>> upper_bound(
-      const T& x) const {
-    return lower_bound(x + 1);
-  }
-
-  std::pair<std::shared_ptr<Node>, T> max_element(const T& x = 0) const {
-    return min_element(~x);
-  }
-
-  std::pair<std::shared_ptr<Node>, T> min_element(const T& x = 0) const {
-    assert(root);
-    std::shared_ptr<Node> node = root;
+  std::pair<Node*, T> find_nth(int n, const T& x) const {
+    assert(0 <= n && n < size());
+    Node* node = root;
     T res = 0;
     for (int b = B - 1; b >= 0; --b) {
-      bool digit = x >> b & 1;
-      if (!node->nxt[digit]) digit = !digit;
-      node = node->nxt[digit];
-      if (digit) res |= static_cast<T>(1) << b;
+      bool d = (x >> b) & 1;
+      const int left = node->nxt[d] ? node->nxt[d]->child : 0;
+      if (n >= left) { n -= left; d ^= 1; }
+      node = node->nxt[d];
+      if (d) res |= (T(1) << b);
     }
     return {node, res};
   }
 
- private:
-  void erase(std::shared_ptr<Node>* node, const T& x, int b) {
-    if (b == -1) {
-      if (--(*node)->child == 0) node->reset();
-      return;
+  std::pair<Node*, std::optional<T>> lower_bound(const T& x) const {
+    const int lt = less_than(x);
+    if (lt == size()) return {nullptr, std::nullopt};
+    auto res = find_nth(lt, 0);
+    return {res.first, std::optional<T>(res.second)};
+  }
+
+  std::pair<Node*, std::optional<T>> upper_bound(const T& x) const {
+    return lower_bound(x + 1);
+  }
+
+  std::pair<Node*, T> max_element(const T& x = 0) const { return min_element(~x); }
+
+  std::pair<Node*, T> min_element(const T& x = 0) const {
+    assert(root);
+    Node* node = root;
+    T res = 0;
+    for (int b = B - 1; b >= 0; --b) {
+      bool d = (x >> b) & 1;
+      if (!node->nxt[d]) d ^= 1;
+      node = node->nxt[d];
+      if (d) res |= (T(1) << b);
     }
-    const bool digit = x >> b & 1;
-    if (!(*node)->nxt[digit]) return;
-    (*node)->child -= (*node)->nxt[digit]->child;
-    erase(&(*node)->nxt[digit], x, b - 1);
-    if ((*node)->nxt[digit]) {
-      (*node)->child += (*node)->nxt[digit]->child;
-    } else if ((*node)->child == 0) {
-      node->reset();
+    return {node, res};
+  }
+
+  // Count y in trie such that (x ^ y) < K
+  int count_xor_less_with(T x, T K) const {
+    if (!root) return 0;
+    Node* node = root;
+    int res = 0;
+    for (int b = B - 1; b >= 0 && node; --b) {
+      const int xb = (x >> b) & 1;
+      const int kb = (K >> b) & 1;
+      if (kb == 1) {
+        Node* same = node->nxt[xb];
+        if (same) res += same->child;
+        node = node->nxt[xb ^ 1];
+      } else {
+        node = node->nxt[xb];
+      }
     }
+    return res;
+  }
+
+private:
+  static void erase_counts(Node* node, const T& x, int b) {
+    // node is non-null and path exists
+    --node->child;
+    if (b == -1) return;
+    const bool d = (x >> b) & 1;
+    erase_counts(node->nxt[d], x, b - 1);
   }
 };
+
