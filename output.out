@@ -1,1 +1,50 @@
-Best times to shutdown: 3 0 
+[PASS] 1: IP="1.2.3.4" CIDR="1.2.3.4" -> true | expect true  -- exact /32 match
+[PASS] 2: IP="1.2.3.5" CIDR="1.2.3.4" -> false | expect false  -- exact /32 non-match
+[PASS] 3: IP="192.168.1.5" CIDR="192.168.1.0/24" -> true | expect true  -- in same /24
+[PASS] 4: IP="192.168.2.5" CIDR="192.168.1.0/24" -> false | expect false  -- different /24
+[PASS] 5: IP="10.0.0.255" CIDR="10.0.0.0/24" -> true | expect true  -- last IP in /24
+[PASS] 6: IP="10.0.1.0" CIDR="10.0.0.0/24" -> false | expect false  -- next /24
+[PASS] 7: IP="192.168.100.4" CIDR="192.168.100.5/30" -> true | expect true  -- boundary start of /30
+[PASS] 8: IP="192.168.100.5" CIDR="192.168.100.5/30" -> true | expect true  -- inside /30
+[PASS] 9: IP="192.168.100.6" CIDR="192.168.100.5/30" -> true | expect true  -- inside /30
+[PASS] 10: IP="192.168.100.7" CIDR="192.168.100.5/30" -> true | expect true  -- boundary end of /30
+[PASS] 11: IP="192.168.100.8" CIDR="192.168.100.5/30" -> false | expect false  -- outside /30
+[PASS] 12: IP="100.100.100.0" CIDR="100.100.100.0/31" -> true | expect true  -- /31 first
+[PASS] 13: IP="100.100.100.1" CIDR="100.100.100.0/31" -> true | expect true  -- /31 second
+[PASS] 14: IP="100.100.100.2" CIDR="100.100.100.0/31" -> false | expect false  -- outside /31
+[PASS] 15: IP="0.0.0.0" CIDR="0.0.0.0/0" -> true | expect true  -- any matches
+[PASS] 16: IP="255.255.255.255" CIDR="1.2.3.4/0" -> true | expect true  -- any matches
+[PASS] 17: IP="123.45.67.89" CIDR="9.9.9.9/0" -> true | expect true  -- any matches
+[PASS] 18: IP="0.0.0.0" CIDR="0.0.0.0/32" -> true | expect true  -- exact 0.0.0.0
+[PASS] 19: IP="0.0.0.1" CIDR="0.0.0.0/32" -> false | expect false  -- just off
+[PASS] 20: IP="255.255.255.255" CIDR="255.255.255.255/32" -> true | expect true  -- exact broadcast
+[PASS] 21: IP="255.255.255.254" CIDR="255.255.255.255/32" -> false | expect false  -- just off
+[PASS] 22: IP="172.16.5.7" CIDR="172.16.0.0/16" -> true | expect true  -- inside /16
+[PASS] 23: IP="172.17.0.1" CIDR="172.16.0.0/16" -> false | expect false  -- outside /16
+[PASS] 24: IP="203.0.113.128" CIDR="203.0.113.0/25" -> false | expect false  -- upper half not in lower /25
+[PASS] 25: IP="203.0.113.127" CIDR="203.0.113.0/25" -> true | expect true  -- lower half /25
+[PASS] 26: IP="203.0.113.127" CIDR="203.0.113.128/25" -> false | expect false  -- lower half not in upper /25
+[PASS] 27: IP="203.0.113.200" CIDR="203.0.113.128/25" -> true | expect true  -- upper half /25
+[PASS] 28: IP="001.002.003.004" CIDR="1.2.3.4" -> true | expect true  -- leading zeros still decimal
+[PASS] 29: IP="  1.2.3.4" CIDR="1.2.3.4" -> true | expect true  -- leading space ip
+[PASS] 30: IP="1.2.3.4   " CIDR="1.2.3.4" -> true | expect true  -- trailing space ip
+[PASS] 31: IP="1.2.3.4" CIDR=" 1.2.3.4/32" -> true | expect true  -- leading space cidr base
+[FAIL] 32: IP="1.2.3.4" CIDR="1.2.3.4 /32" -> true | expect false  -- space before slash breaks strict parser
+[PASS] 33: IP="256.0.0.1" CIDR="256.0.0.1/32" -> false | expect false  -- invalid both sides
+[PASS] 34: IP="1.2.3.4" CIDR="256.0.0.1/32" -> false | expect false  -- invalid rule base
+[PASS] 35: IP="300.2.3.4" CIDR="1.2.3.0/24" -> false | expect false  -- invalid probe ip
+[PASS] 36: IP="1.2.3" CIDR="1.2.3.0/24" -> false | expect false  -- missing octet
+[FAIL] 37: IP="1.2.3.4.5" CIDR="1.2.3.0/24" -> true | expect false  -- extra octet
+[PASS] 38: IP="a.b.c.d" CIDR="1.2.3.0/24" -> false | expect false  -- non-numeric ip
+[PASS] 39: IP="1.2.3.4" CIDR="1.2.3.0/33" -> false | expect false  -- mask > 32
+[PASS] 40: IP="1.2.3.4" CIDR="1.2.3.0/-1" -> false | expect false  -- negative mask (stoi -> -1 then cast)
+[PASS] 41: IP="192.168.0.1" CIDR="192.168.0.0/16" -> true | expect true  -- inside 192.168.0.0/16
+[PASS] 42: IP="192.169.0.1" CIDR="192.168.0.0/16" -> false | expect false  -- outside 192.168.0.0/16
+[PASS] 43: IP="10.1.2.3" CIDR="10.0.0.0/8" -> true | expect true  -- inside 10.0.0.0/8
+[PASS] 44: IP="11.0.0.1" CIDR="10.0.0.0/8" -> false | expect false  -- outside 10.0.0.0/8
+[PASS] 45: IP="203.0.113.4" CIDR="203.0.113.5/30" -> true | expect true  -- normalizes to .4/30
+[PASS] 46: IP="203.0.113.8" CIDR="203.0.113.5/30" -> false | expect false  -- next /30 block
+[PASS] 47: IP="255.255.255.255" CIDR="255.255.255.252/30" -> true | expect true  -- last /30 block matches .252-.255
+[PASS] 48: IP="255.255.255.251" CIDR="255.255.255.252/30" -> false | expect false  -- just before block
+
+Summary: 46 passed, 2 failed, total 48
