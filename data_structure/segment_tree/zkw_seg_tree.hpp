@@ -66,4 +66,13 @@ struct RangeSumQuery {
   static Monoid merge(const Monoid& a, const Monoid& b) { return a + b; }
 };
 
+template <typename T>
+struct RangeXorQuery {
+  using Monoid = T;
+  static constexpr Monoid id() { return 0; }
+  static Monoid merge(const Monoid& a, const Monoid& b) { return a ^ b; }
+};
+
+
+
 }  // namespace monoid

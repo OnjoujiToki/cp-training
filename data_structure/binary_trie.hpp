@@ -2,7 +2,7 @@ template <int B = 32, typename T = std::uint32_t>
 struct BinaryTrie {
   struct Node {
     Node* nxt[2];
-    int child;                       // # elements in this subtree
+    int child;  // # elements in this subtree
     Node() : nxt{nullptr, nullptr}, child(0) {}
   };
 
@@ -10,12 +10,10 @@ struct BinaryTrie {
 
   BinaryTrie() : root(nullptr) {}
 
-  void clear() {   
-    root = nullptr;
-  }
+  void clear() { root = nullptr; }
 
   bool empty() const { return root == nullptr; }
-  int  size()  const { return root ? root->child : 0; }
+  int size() const { return root ? root->child : 0; }
 
   Node* insert(const T& x) {
     if (!root) root = new Node();
@@ -30,16 +28,35 @@ struct BinaryTrie {
     return node;
   }
 
+  T max_xor_value(T x) const {
+    if (!root || root->child == 0) return 0;
+    Node* node = root;
+    T res = 0;
+    for (int b = B - 1; b >= 0; --b) {
+      int bit = (x >> b) & 1;
+      int want = bit ^ 1;
+      if (node->nxt[want] && node->nxt[want]->child > 0) {
+        res |= (T(1) << b);
+        node = node->nxt[want];
+      } else {
+        node = node->nxt[bit];
+      }
+    }
+    return res;
+  }
+
+  // still make 01 trie going into the path, use max_xor_value instead if you
+  // erased any element
   void erase(const T& x) {
     if (!root) return;
     Node* node = root;
     for (int b = B - 1; b >= 0; --b) {
       const bool d = (x >> b) & 1;
-      if (!node->nxt[d]) return;     
+      if (!node->nxt[d]) return;
       node = node->nxt[d];
     }
     erase_counts(root, x, B - 1);
-    if (root && root->child == 0) root = nullptr;  
+    if (root && root->child == 0) root = nullptr;
   }
 
   Node* find(const T& x) const {
@@ -64,7 +81,9 @@ struct BinaryTrie {
     return res;
   }
 
-  int count(const T& l, const T& r) const { return less_than(r) - less_than(l); }
+  int count(const T& l, const T& r) const {
+    return less_than(r) - less_than(l);
+  }
 
   int count(const T& x) const {
     Node* p = find(x);
@@ -80,7 +99,10 @@ struct BinaryTrie {
     for (int b = B - 1; b >= 0; --b) {
       bool d = (x >> b) & 1;
       const int left = node->nxt[d] ? node->nxt[d]->child : 0;
-      if (n >= left) { n -= left; d ^= 1; }
+      if (n >= left) {
+        n -= left;
+        d ^= 1;
+      }
       node = node->nxt[d];
       if (d) res |= (T(1) << b);
     }
@@ -98,7 +120,9 @@ struct BinaryTrie {
     return lower_bound(x + 1);
   }
 
-  std::pair<Node*, T> max_element(const T& x = 0) const { return min_element(~x); }
+  std::pair<Node*, T> max_element(const T& x = 0) const {
+    return min_element(~x);
+  }
 
   std::pair<Node*, T> min_element(const T& x = 0) const {
     assert(root);
@@ -132,7 +156,7 @@ struct BinaryTrie {
     return res;
   }
 
-private:
+ private:
   static void erase_counts(Node* node, const T& x, int b) {
     // node is non-null and path exists
     --node->child;
@@ -141,4 +165,3 @@ private:
     erase_counts(node->nxt[d], x, b - 1);
   }
 };
-

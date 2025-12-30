@@ -1,5 +1,67 @@
-A.cpp
-B.cpp
-input.in
-output.output
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Compiled binaries (common CP problem names)
 A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+*.exe
+*.out
+a.out
+
+# Object files and libraries
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+
+# Input/Output test files
+input.in
+output.out
+output.output
+*.in
+*.out
+*.ans
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+a.py
+b.py
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+
+# Temporary and debug files
+*.log
+*.tmp
+temp/
+tmp/
+
+# Contest-specific working files (uncomment if needed)
+# A.cpp
+# B.cpp
+# C.cpp
+# D.cpp

@@ -78,3 +78,34 @@ std::vector<int> fast_prime_factorization(int n) {
     if (!divisor[i]) divisor[i] = i;
   return divisor;
 }
+
+
+struct SPF {
+  int n;
+  std::vector<int> spf, primes;
+  SPF(int n): n(n), spf(n + 1, 0) {
+      for (int i = 2; i <= n; ++i) {
+          if (!spf[i]) {
+              spf[i] = i;
+              primes.push_back(i);
+          }
+          for (int p : primes) {
+              long long v = 1LL * i * p;
+              if (v > n || p > spf[i]) break;
+              spf[(int)v] = p;
+          }
+      }
+  }
+  // 去重质因子
+  std::vector<int> factor_distinct(int x) const {
+      vector<int> res;
+      while (x > 1) {
+          int p = spf[x];
+          res.push_back(p);
+          while (x % p == 0) x /= p;
+      }
+      return res;
+  }
+};
+
+
