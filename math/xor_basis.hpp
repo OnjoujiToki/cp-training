@@ -81,7 +81,7 @@ struct Basis {
         res[sz + j] = res[j] ^ v[i];
       }
     }
-    return res;
+    return res; 
   }
 
     // 返回第 k 小的 XOR 值（0-indexed，包含 0）
