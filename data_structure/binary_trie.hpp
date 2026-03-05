@@ -45,8 +45,6 @@ struct BinaryTrie {
     return res;
   }
 
-  // still make 01 trie going into the path, use max_xor_value instead if you
-  // erased any element
   void erase(const T& x) {
     if (!root) return;
     Node* node = root;
