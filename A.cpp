@@ -574,322 +574,460 @@ template <class T>
 using is_dynamic_modint_t = std::enable_if_t<is_dynamic_modint<T>::value>;
 
 }  // namespace internal
-using mint = modint998244353;
+// using mint = modint998244353;
 /*
 g++ -std=c++23 -O2 -Wall -Wextra A.cpp -o A
 ./A < input.in > output.out
 
 */
-template <typename CostType>
-struct Edge {
-  CostType cost;
-  int src, dst;
 
-  explicit Edge(const int src, const int dst, const CostType cost = 0)
-      : cost(cost), src(src), dst(dst) {}
-
-  auto operator<=>(const Edge& x) const = default;
+template <int mod>
+struct ModInt {
+  int x;
+  ModInt() : x(0) {}
+  ModInt(long long y) : x(y >= 0 ? y % mod : (mod - (-y) % mod) % mod) {}
+  ModInt& operator+=(const ModInt& p) {
+    if ((x += p.x) >= mod) x -= mod;
+    return *this;
+  }
+  ModInt& operator-=(const ModInt& p) {
+    if ((x += mod - p.x) >= mod) x -= mod;
+    return *this;
+  }
+  ModInt& operator*=(const ModInt& p) {
+    x = (int)(1LL * x * p.x % mod);
+    return *this;
+  }
+  ModInt& operator/=(const ModInt& p) {
+    *this *= p.inverse();
+    return *this;
+  }
+  ModInt& operator^=(long long p) {  // quick_pow here:3
+    ModInt res = 1;
+    for (; p; p >>= 1) {
+      if (p & 1) res *= *this;
+      *this *= *this;
+    }
+    return *this = res;
+  }
+  ModInt operator-() const { return ModInt(-x); }
+  ModInt operator+(const ModInt& p) const { return ModInt(*this) += p; }
+  ModInt operator-(const ModInt& p) const { return ModInt(*this) -= p; }
+  ModInt operator*(const ModInt& p) const { return ModInt(*this) *= p; }
+  ModInt operator/(const ModInt& p) const { return ModInt(*this) /= p; }
+  ModInt operator^(long long p) const { return ModInt(*this) ^= p; }
+  bool operator==(const ModInt& p) const { return x == p.x; }
+  bool operator!=(const ModInt& p) const { return x != p.x; }
+  explicit operator int() const { return x; }  // added by QCFium
+  ModInt operator=(const int p) {
+    x = p;
+    return ModInt(*this);
+  }  // added by QCFium
+  ModInt inverse() const {
+    int a = x, b = mod, u = 1, v = 0, t;
+    while (b > 0) {
+      t = a / b;
+      a -= t * b;
+      std::swap(a, b);
+      u -= t * v;
+      std::swap(u, v);
+    }
+    return ModInt(u);
+  }
+  friend std::ostream& operator<<(std::ostream& os, const ModInt<mod>& p) {
+    return os << p.x;
+  }
+  friend std::istream& operator>>(std::istream& is, ModInt<mod>& a) {
+    long long x;
+    is >> x;
+    a = ModInt<mod>(x);
+    return (is);
+  }
+};
+using mint = ModInt<1000000007>;
+const int MOD = 1000000007;
+struct MComb {
+  std::vector<mint> fact;
+  std::vector<mint> inversed;
+  MComb(int n) {  // O(n+log(mod))
+    fact = std::vector<mint>(n + 1, 1);
+    for (int i = 1; i <= n; i++) fact[i] = fact[i - 1] * mint(i);
+    inversed = std::vector<mint>(n + 1);
+    inversed[n] = fact[n] ^ (MOD - 2);
+    for (int i = n - 1; i >= 0; i--)
+      inversed[i] = inversed[i + 1] * mint(i + 1);
+  }
+  mint ncr(int n, int r) {
+    if (n < r) return 0;
+    return (fact[n] * inversed[r] * inversed[n - r]);
+  }
+  mint npr(int n, int r) { return (fact[n] * inversed[n - r]); }
+  mint nhr(int n, int r) {
+    assert(n + r - 1 < (int)fact.size());
+    return ncr(n + r - 1, r);
+  }
 };
 
-template <typename CostType>
-struct HeavyLightDecomposition {
-  std::vector<int> parent, subtree, id, inv, head;
-  std::vector<CostType> cost;
+mint ncr(int n, int r) {
+  mint res = 1;
+  for (int i = n - r + 1; i <= n; i++) res *= i;
+  for (int i = 1; i <= r; i++) res /= i;
+  return res;
+}
 
-  explicit HeavyLightDecomposition(
-      const std::vector<std::vector<Edge<CostType>>>& graph, const int root = 0)
-      : graph(graph) {
-    const int n = graph.size();
-    parent.assign(n, -1);
-    subtree.assign(n, 1);
-    dfs1(root);
-    id.resize(n);
-    inv.resize(n);
-    head.assign(n, root);
-    int cur_id = 0;
-    dfs2(root, &cur_id);
-  }
+template <typename T, bool IS_MINIMIZED = true>
+struct ConvexHullTrick {
+  ConvexHullTrick() = default;
 
-  template <typename Fn>
-  void update_v(int u, int v, const Fn f) const {
-    while (true) {
-      if (id[u] > id[v]) std::swap(u, v);
-      f(std::max(id[head[v]], id[u]), id[v] + 1);
-      if (head[u] == head[v]) break;
-      v = parent[head[v]];
+  void add(T a, T b) {
+    if constexpr (!IS_MINIMIZED) {
+      a = -a;
+      b = -b;
     }
-  }
-  template <typename F, typename G, typename T>
-  T query_v(int u, int v, const F f, const G g, const T id_t) const {
-    T left = id_t, right = id_t;
-    while (true) {
-      if (id[u] > id[v]) {
-        std::swap(u, v);
-        std::swap(left, right);
+    const Line line(a, b);
+    if (deq.empty()) [[unlikely]] {
+      deq.emplace_back(line);
+    } else if (deq.back().first >= a) {
+      if (deq.back().first == a) {
+        if (b >= deq.back().second) return;
+        deq.pop_back();
       }
-      // 在 v 这一侧的链上，查询 [max(id[head[v]], id[u]), id[v]] 这些点
-      left = g(left, f(std::max(id[head[v]], id[u]), id[v] + 1));
-      if (head[u] == head[v]) break;
-      v = parent[head[v]];
-    }
-    return g(left, right);
-  }
-
-  template <typename Fn>
-  void update_subtree_v(const int ver, const Fn f) const {
-    f(id[ver], id[ver] + subtree[ver]);
-  }
-
-  template <typename T, typename Fn>
-  T query_subtree_v(const int ver, const Fn f) const {
-    return f(id[ver], id[ver] + subtree[ver]);
-  }
-
-  template <typename Fn>
-  void update_e(int u, int v, const Fn f) const {
-    while (true) {
-      if (id[u] > id[v]) std::swap(u, v);
-      if (head[u] == head[v]) {
-        f(id[u], id[v]);
-        break;
-      } else {
-        f(id[head[v]] - 1, id[v]);
-        v = parent[head[v]];
+      for (int i = std::ssize(deq) - 2; i >= 0; --i) {
+        if (!must_pop(deq[i], deq[i + 1], line)) break;
+        deq.pop_back();
       }
-    }
-  }
-
-  template <typename F, typename G, typename T>
-  T query_e(int u, int v, const F f, const G g, const T id_t) const {
-    T left = id_t, right = id_t;
-    while (true) {
-      if (id[u] > id[v]) {
-        std::swap(u, v);
-        std::swap(left, right);
+      deq.emplace_back(line);
+    } else {
+      if (deq.front().first == a) {
+        if (b >= deq.front().second) return;
+        deq.pop_front();
       }
-      if (head[u] == head[v]) {
-        left = g(left, f(id[u], id[v]));
-        break;
-      } else {
-        left = g(left, f(id[head[v]] - 1, id[v]));
-        v = parent[head[v]];
+      while (deq.size() >= 2 && must_pop(line, deq.front(), deq[1])) {
+        deq.pop_front();
       }
+      deq.emplace_front(line);
     }
-    return g(left, right);
   }
 
-  template <typename Fn>
-  void update_subtree_e(const int ver, const Fn f) const {
-    f(id[ver], id[ver] + subtree[ver] - 1);
-  }
-
-  template <typename T, typename Fn>
-  T query_subtree_e(const int ver, const Fn f) const {
-    return f(id[ver], id[ver] + subtree[ver] - 1);
-  }
-
-  // 对树边 (u, v) 做一次单边更新：调用 f(pos)
-  // 其中 pos 是该边在“边序列”里的唯一位置（本实现为 id[child] - 1）。
-  template <typename Fn>
-  void update_single_edge(int u, int v, const Fn& f) const {
-    if (parent[u] == v) std::swap(u, v);
-    const int pos = id[v] - 1;
-    f(pos);
-  }
-
-  int lowest_common_ancestor(int u, int v) const {
-    while (true) {
-      if (id[u] > id[v]) std::swap(u, v);
-      if (head[u] == head[v]) break;
-      v = parent[head[v]];
+  T query(const T x) const {
+    assert(!deq.empty());
+    int lb = -1, ub = deq.size() - 1;
+    while (ub - lb > 1) {
+      const int mid = std::midpoint(lb, ub);
+      (f(deq[mid], x) < f(deq[mid + 1], x) ? ub : lb) = mid;
     }
-    return u;
+    return IS_MINIMIZED ? f(deq[ub], x) : -f(deq[ub], x);
+  }
+
+  T monotonically_increasing_query(const T x) {
+    while (deq.size() >= 2 && f(deq.front(), x) >= f(deq[1], x)) {
+      deq.pop_front();
+    }
+    return IS_MINIMIZED ? f(deq.front(), x) : -f(deq.front(), x);
+  }
+
+  T monotonically_decreasing_query(const T x) {
+    for (int i = std::ssize(deq) - 2; i >= 0; --i) {
+      if (f(deq[i], x) > f(deq[i + 1], x)) break;
+      deq.pop_back();
+    }
+    return IS_MINIMIZED ? f(deq.back(), x) : -f(deq.back(), x);
   }
 
  private:
-  std::vector<std::vector<Edge<CostType>>> graph;
+  using Line = std::pair<T, T>;
 
-  void dfs1(const int ver) {
-    for (int i = 0; std::cmp_less(i, graph[ver].size()); ++i) {
-      Edge<CostType>& e = graph[ver][i];
-      if (e.dst != parent[ver]) {
-        parent[e.dst] = ver;
-        dfs1(e.dst);
-        subtree[ver] += subtree[e.dst];
-        if (subtree[e.dst] > subtree[graph[ver].front().dst]) {
-          std::swap(e, graph[ver].front());
+  std::deque<Line> deq;
+
+  bool must_pop(const Line& l1, const Line& l2, const Line& l3) const {
+#ifdef __SIZEOF_INT128__
+    const T lhs_num = l3.second - l2.second, lhs_den = l2.first - l3.first;
+    const T rhs_num = l2.second - l1.second, rhs_den = l1.first - l2.first;
+    return __int128{lhs_num} * rhs_den <= __int128{rhs_num} * lhs_den;
+#else
+    const long double lhs =
+        static_cast<long double>(l3.second - l2.second) / (l2.first - l3.first);
+    const long double rhs =
+        static_cast<long double>(l2.second - l1.second) / (l1.first - l2.first);
+    return lhs <= rhs;
+#endif  // __SIZEOF_INT128__
+  }
+
+  T f(const Line& l, const T x) const { return l.first * x + l.second; }
+};
+
+template <class T>
+struct Matrix {
+  std::vector<std::vector<T>> A;
+
+  Matrix() {}
+
+  Matrix(int n, int m) : A(n, std::vector<T>(m, 0)) {}
+
+  Matrix(int n) : A(n, std::vector<T>(n, 0)) {};
+
+  int size() const {
+    if (A.empty()) return 0;
+    assert(A.size() == A[0].size());
+    return A.size();
+  }
+
+  int height() const { return (A.size()); }
+
+  int width() const { return (A[0].size()); }
+
+  inline const std::vector<T>& operator[](int k) const { return (A.at(k)); }
+
+  inline std::vector<T>& operator[](int k) { return (A.at(k)); }
+
+  static Matrix I(int n) {
+    Matrix mat(n);
+    for (int i = 0; i < n; i++) mat[i][i] = 1;
+    return (mat);
+  }
+
+  Matrix& operator+=(const Matrix& B) {
+    int n = height(), m = width();
+    assert(n == B.height() && m == B.width());
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < m; j++) (*this)[i][j] += B[i][j];
+    return (*this);
+  }
+
+  Matrix& operator-=(const Matrix& B) {
+    int n = height(), m = width();
+    assert(n == B.height() && m == B.width());
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < m; j++) (*this)[i][j] -= B[i][j];
+    return (*this);
+  }
+
+  Matrix& operator*=(const Matrix& B) {
+    int n = height(), m = B.width(), p = width();
+    assert(p == B.height());
+    std::vector<std::vector<T>> C(n, std::vector<T>(m, 0));
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < m; j++)
+        for (int k = 0; k < p; k++)
+          C[i][j] = (C[i][j] + (*this)[i][k] * B[k][j]);
+    A.swap(C);
+    return (*this);
+  }
+
+  Matrix multiply_mod(const Matrix& A, const Matrix& B, long long mod) {
+    int n = height(), m = B.width(), p = width();
+    assert(p == B.height());
+    Matrix C(n, m);
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < m; j++)
+        for (int k = 0; k < p; k++)
+          C[i][j] = (C[i][j] + A[i][k] * B[k][j]) % mod;
+
+    return C;
+  }
+
+  Matrix& operator^=(long long k) {
+    Matrix B = Matrix::I(height());
+    while (k > 0) {
+      if (k & 1) B *= *this;
+      *this *= *this;
+      k >>= 1LL;
+    }
+    A.swap(B.A);
+    return (*this);
+  }
+
+  Matrix pow_mod(Matrix& A, long long k, long long mod) {
+    Matrix B = Matrix::I(height());
+    while (k > 0) {
+      if (k & 1) B = multiply_mod(B, A, mod);
+      A = multiply_mod(A, A, mod);
+      k >>= 1LL;
+    }
+    return B;
+  }
+
+  template <typename Func>
+  Matrix power(long long k, const Matrix& unit, Func mult) const {
+    if (k == 0) return unit;
+
+    Matrix res;
+    Matrix base = *this;
+    bool initialized = false;
+
+    while (k > 0) {
+      if (k & 1) {
+        if (!initialized) {
+          res = base;
+          initialized = true;
+        } else {
+          res = mult(res, base);
+        }
+      }
+      base = mult(base, base);
+      k >>= 1;
+    }
+    return res;
+  }
+
+  Matrix operator+(const Matrix& B) const { return (Matrix(*this) += B); }
+
+  Matrix operator-(const Matrix& B) const { return (Matrix(*this) -= B); }
+
+  Matrix operator*(const Matrix& B) const { return (Matrix(*this) *= B); }
+
+  Matrix operator^(const long long k) const { return (Matrix(*this) ^= k); }
+
+  friend std::ostream& operator<<(std::ostream& os, Matrix& p) {
+    int n = p.height(), m = p.width();
+    for (int i = 0; i < n; i++) {
+      os << "[";
+      for (int j = 0; j < m; j++) {
+        os << p[i][j] << (j + 1 == m ? "]\n" : ",");
+      }
+    }
+    return (os);
+  }
+
+  T determinant() {
+    Matrix B(*this);
+    assert(width() == height());
+    T ret = 1;
+    for (int i = 0; i < width(); i++) {
+      int idx = -1;
+      for (int j = i; j < width(); j++) {
+        if (B[j][i] != 0) idx = j;
+      }
+      if (idx == -1) return (0);
+      if (i != idx) {
+        ret *= -1;
+        swap(B[i], B[idx]);
+      }
+      ret *= B[i][i];
+      T vv = B[i][i];
+      for (int j = 0; j < width(); j++) {
+        B[i][j] /= vv;
+      }
+      for (int j = i + 1; j < width(); j++) {
+        T a = B[j][i];
+        for (int k = 0; k < width(); k++) {
+          B[j][k] -= B[i][k] * a;
         }
       }
     }
+    return (ret);
+  }
+};
+
+template <typename T>
+struct FenwickTree {
+  std::vector<T> bit;
+  int n;
+
+  FenwickTree(int _n) : n(_n), bit(_n) {}
+
+  // prefix sum [0, r]
+  T sum(int r) {
+    T ret = 0;
+    for (; r >= 0; r = (r & (r + 1)) - 1) ret += bit[r];
+    return ret;
   }
 
-  void dfs2(const int ver, int* cur_id) {
-    id[ver] = (*cur_id)++;
-    inv[id[ver]] = ver;
-    for (const Edge<CostType>& e : graph[ver]) {
-      if (e.dst != parent[ver]) {
-        head[e.dst] = (e.dst == graph[ver].front().dst ? head[ver] : e.dst);
-        cost.emplace_back(e.cost);
-        dfs2(e.dst, cur_id);
-      }
+  // range sum [l, r)
+  T sum(int l, int r) {
+    assert(l <= r);
+    return sum(r - 1) - sum(l - 1);
+  }
+
+  void add(int idx, T delta) {
+    for (; idx < n; idx = idx | (idx + 1)) bit[idx] += delta;
+  }
+
+  void set(int idx, T val) { add(idx, val - sum(idx, idx + 1)); }
+};
+
+// follow yosupo judge
+void arg_sort(std::vector<std::tuple<long long, long long, int>>& a) {
+  // 讨论 (0, 0)
+  auto get_region = [](long long x, long long y) -> int {
+    if (y < 0) return 0;             // (-pi, 0) : 第三、四象限及负 Y 轴
+    if (y == 0 && x >= 0) return 1;  // 0        : 正 X 轴及原点 (0,0)
+    if (y > 0) return 2;             // (0, pi)  : 第一、二象限及正 Y 轴
+    return 3;                        // pi       : 负 X 轴
+  };
+
+  std::ranges::sort(a, [get_region](const auto& u, const auto& v) {
+    auto [ux, uy, uidx] = u;
+    auto [vx, vy, vidx] = v;
+    int ru = get_region(ux, uy);
+    int rv = get_region(vx, vy);
+
+    // 1. 区域不同
+    if (ru != rv) return ru < rv;
+    // 2. 区域相同
+    long long cross = ux * vy - uy * vx;
+    if (cross != 0) return cross > 0;
+
+    // 3. 严格共线时（包括同为 (0,0)），按距离原点的长度升序
+    return ux * ux + uy * uy < vx * vx + vy * vy;
+  });
+}
+void solve() {
+  int n, q;
+  std::cin >> n >> q;
+  std::vector<std::tuple<long long, long long, int>> a(n);
+  for (int i = 0; i < n; i++) {
+    int x, y;
+    std::cin >> x >> y;
+    a[i] = {x, y, i};
+  }
+  arg_sort(a);
+  auto is_same_ray = [](const auto& u, const auto& v) {
+    auto [ux, uy, uidx] = u;
+    auto [vx, vy, vidx] = v;
+    return ux * vy == uy * vx && ux * vx + uy * vy > 0;
+  };
+  std::vector<int> cnt;
+  std::vector<int> p2cnt(n);
+  int cur_ray_idx = -1;
+  for (int i = 0; i < n; i++) {
+    if (i == 0 || !is_same_ray(a[i], a[i - 1])) {
+      cnt.push_back(1);
+      cur_ray_idx++;
+    } else {
+      cnt.back()++;
+    }
+    auto [x, y, idx] = a[i];
+    p2cnt[idx] = cur_ray_idx;
+  }
+  int m = cnt.size();
+  std::vector<int> pre(m + 1);
+  for (int i = 0; i < m; i++) {
+    pre[i + 1] = pre[i] + cnt[i];
+  }
+  for (int i = 0; i < q; i++) {
+    int l, r;
+    std::cin >> l >> r;
+    l--;
+    r--;
+    int u = p2cnt[l];
+    int v = p2cnt[r];
+
+    if (u >= v) {
+      std::cout << pre[u + 1] - pre[v] << "\n";
+    } else {
+      std::cout << pre[u + 1] + pre[m] - pre[v] << "\n";
     }
   }
-};
-
-// credit emthrm.github.io/library
-template <typename T>
-struct SegmentTree {
-  using Monoid = typename T::Monoid;
-
-  explicit SegmentTree(int n) : SegmentTree(std::vector<Monoid>(n, T::id())) {}
-
-  explicit SegmentTree(const std::vector<Monoid>& a) : n(a.size()), sz(1) {
-    while (sz < n) sz <<= 1;
-    data.assign(sz << 1, T::id());
-    std::copy(a.begin(), a.end(), data.begin() + sz);
-    for (int i = sz - 1; i > 0; --i) {
-      data[i] = T::merge(data[i << 1], data[(i << 1) + 1]);
-    }
-  }
-
-  void set(int idx, const Monoid val) {
-    idx += sz;
-    data[idx] = val;
-    while (idx >>= 1)
-      data[idx] = T::merge(data[idx << 1], data[(idx << 1) + 1]);
-  }
-
-  Monoid get(int left, int right) const {
-    Monoid res_l = T::id(), res_r = T::id();
-    for (left += sz, right += sz; left < right; left >>= 1, right >>= 1) {
-      if (left & 1) res_l = T::merge(res_l, data[left++]);
-      if (right & 1) res_r = T::merge(data[--right], res_r);
-    }
-    return T::merge(res_l, res_r);
-  }
-
-  Monoid operator[](const int idx) const { return data[idx + sz]; }
-
- private:
-  const int n;
-  int sz;  // sz + 原数组坐标 = 线段树里的编号，1 based
-  std::vector<Monoid> data;
-};
-
-namespace monoid {
-
-template <typename T>
-struct RangeMinimumQuery {
-  using Monoid = T;
-  static constexpr Monoid id() { return std::numeric_limits<Monoid>::max(); }
-  static Monoid merge(const Monoid& a, const Monoid& b) {
-    return std::min(a, b);
-  }
-};
-
-template <typename T>
-struct RangeMaximumQuery {
-  using Monoid = T;
-  static constexpr Monoid id() { return std::numeric_limits<Monoid>::lowest(); }
-  static Monoid merge(const Monoid& a, const Monoid& b) {
-    return std::max(a, b);
-  }
-};
-
-template <typename T>
-struct RangeSumQuery {
-  using Monoid = T;
-  static constexpr Monoid id() { return 0; }
-  static Monoid merge(const Monoid& a, const Monoid& b) { return a + b; }
-};
-
-template <typename T>
-struct RangeXorQuery {
-  using Monoid = T;
-  static constexpr Monoid id() { return 0; }
-  static Monoid merge(const Monoid& a, const Monoid& b) { return a ^ b; }
-};
-
-}  // namespace monoid
-
-template <typename T>
-struct DSU {
-  std::vector<T> f, siz;
-  DSU(int n) : f(n), siz(n, 1) { std::iota(f.begin(), f.end(), 0); }
-  T leader(T x) {
-    while (x != f[x]) x = f[x] = f[f[x]];
-    return x;
-  }
-  bool same(T x, T y) { return leader(x) == leader(y); }
-  bool merge(T x, T y) {
-    x = leader(x);
-    y = leader(y);
-    if (x == y) return false;
-    siz[x] += siz[y];
-    f[y] = x;
-    return true;
-  }
-  T size(int x) { return siz[leader(x)]; }
-};
+}
 
 int main() {
-  std::ios_base::sync_with_stdio(false);
+  std::ios::sync_with_stdio(false);
   std::cin.tie(nullptr);
-
-  int n, m;
-  std::cin >> n >> m;
-  std::vector<std::pair<Edge<long long>, int>> edges;
-  DSU<int> dsu(n);
-  for (int i = 0; i < m; i++) {
-    int u, v;
-    long long w;
-    std::cin >> u >> v >> w;
-    --u;
-    --v;
-    edges.emplace_back(Edge<long long>{u, v, w}, i);
+  int t = 1;
+  // std::cin >> t;
+  while (t--) {
+    solve();
   }
-  std::sort(edges.begin(), edges.end(),
-            [](const std::pair<Edge<long long>, int>& a,
-               const std::pair<Edge<long long>, int>& b) {
-              return a.first.cost < b.first.cost;
-            });
-  long long ans = 0;
-  std::vector<std::pair<Edge<long long>, int>> mst;
-  for (const auto& edge : edges) {
-    if (dsu.merge(edge.first.src, edge.first.dst)) {
-      mst.emplace_back(edge.first, edge.second);
-      ans += edge.first.cost;
-    }
-  }
-
-  std::vector<std::vector<Edge<long long>>> g(n);
-  for (const auto& [edge, id] : mst) {
-    g[edge.src].emplace_back(edge);
-    g[edge.dst].emplace_back(Edge<long long>{edge.dst, edge.src, edge.cost});
-  }
-
-  HeavyLightDecomposition<long long> hld(g, 0);
-
-  SegmentTree<monoid::RangeMaximumQuery<long long>> segtree(n);
-  for (const auto& [edge, id] : mst) {
-    int u = edge.src, v = edge.dst;
-    long long w = edge.cost;
-    hld.update_single_edge(u, v, [&](int pos) { segtree.set(pos, w); });
-  }
-
-  std::vector<long long> res(m);
-  for (auto& [edge, id] : edges) {
-    int u = edge.src;
-    int v = edge.dst;
-    long long w = edge.cost;
-    long long max_in_path = hld.query_e(
-        u, v, [&](int l, int r) { return segtree.get(l, r); },
-        [](long long a, long long b) { return std::max(a, b); }, 0LL);
-    res[id] = ans - max_in_path + w;
-  }
-  for (int i = 0; i < m; i++) {
-    std::cout << res[i] << "\n";
-  }
-
   return 0;
 }
