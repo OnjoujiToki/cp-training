@@ -1,12 +1,8 @@
-#include <algorithm>
-#include <set>
-#include <vector>
-
 struct ChthollyNode {
   int l, r;
   mutable int v;
   ChthollyNode(int l, int r, int v) : l(l), r(r), v(v) {}
-  bool operator<(const ChthollyNode &o) const { return l < o.l; }
+  bool operator<(const ChthollyNode& o) const { return l < o.l; }
 };
 
 std::set<ChthollyNode> tr;
@@ -39,10 +35,32 @@ int kth(int l, int r, int k) {
   std::vector<std::pair<int, int>> v;  // 这个pair里存节点的值和区间长度
   for (auto it = split(l); it != end; it++)
     v.emplace_back(it->v, it->r - it->l + 1);
-  std::sort(v.begin(), v.end());  // 直接按节点的值的大小排下序
+  std::sort(v.begin(), v.end());      // 直接按节点的值的大小排下序
   for (int i = 0; i < v.size(); i++)  // 然后挨个丢出来，直到丢出k个元素为止
   {
     k -= v[i].second;
     if (k <= 0) return v[i].first;
   }
+}
+int ones = 0;  // 全局变量，记录当前数组中 1 的个数
+void range_xor(int l, int r) {
+  auto itR = split(r + 1);
+  for (auto it = split(l); it != itR; ++it) {
+    int len = it->r - it->l + 1;
+    ones += (it->v ? -len : +len);
+    it->v ^= 1;
+  }
+}
+
+void paint_black(int l, int r) {
+  auto itR = split(r + 1);
+  auto itL = split(l);
+
+  for (auto it = itL; it != itR; ++it) {
+    if (it->v == 1) ones -= (it->r - it->l + 1);
+  }
+
+  tr.erase(itL, itR);
+  tr.insert(ChthollyNode(l, r, 1));
+  ones += (r - l + 1);
 }
