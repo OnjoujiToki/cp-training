@@ -297,4 +297,5 @@ struct RangeSumAndAddQuery {
   }
 };
 
+
 }  // namespace monoid
