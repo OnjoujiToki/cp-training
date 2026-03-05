@@ -83,6 +83,44 @@ struct scc_graph {
     return groups;
   }
 
+  // Build SCC DAG directly.
+  // Return: (scc_num, comp[v], dag[comp] adjacency). SCC ids are topo-sorted.
+  std::tuple<int, std::vector<int>, std::vector<std::vector<int>>>
+  scc_dag_ids() {
+    auto [group_num, comp] = scc_ids();
+
+    std::vector<std::vector<int>> tmp(group_num);
+    tmp.assign(group_num, {});
+    for (auto& e : edges) {
+      int u = e.first;
+      int v = e.second.to;
+      int cu = comp[u], cv = comp[v];
+      if (cu == cv) continue;
+      tmp[cu].push_back(cv);
+    }
+
+    std::vector<std::vector<int>> dag(group_num);
+    for (int c = 0; c < group_num; c++) {
+      auto& t = tmp[c];
+      std::sort(t.begin(), t.end());
+      t.erase(std::unique(t.begin(), t.end()), t.end());
+      dag[c] = std::move(t);
+    }
+    return {group_num, comp, dag};
+  }
+
+  // also compute indegree of SCC DAG (after dedup).
+  std::tuple<int, std::vector<int>, std::vector<std::vector<int>>,
+             std::vector<int>>
+  scc_dag_ids_with_indeg() {
+    auto [group_num, comp, dag] = scc_dag_ids();
+    std::vector<int> indeg(group_num, 0);
+    for (int u = 0; u < group_num; u++) {
+      for (int v : dag[u]) indeg[v]++;
+    }
+    return {group_num, comp, dag, indeg};
+  }
+
  private:
   int _n;
   struct edge {
