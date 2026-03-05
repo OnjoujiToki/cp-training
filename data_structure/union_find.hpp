@@ -18,6 +18,34 @@ struct DSU {
   T size(int x) { return siz[leader(x)]; }
 };
 
+struct DSU {
+  std::vector<int> f, siz, l, r;
+  DSU(int n) : f(n), siz(n, 1), l(n), r(n) {
+    std::iota(f.begin(), f.end(), 0);
+    std::iota(l.begin(), l.end(), 0);
+    std::iota(r.begin(), r.end(), 0);
+  }
+  int leader(int x) {
+    while (x != f[x]) x = f[x] = f[f[x]];
+    return x;
+  }
+  bool same(int x, int y) { return leader(x) == leader(y); }
+  bool merge(int x, int y) {
+    x = leader(x);
+    y = leader(y);
+    if (x == y) return false;
+    siz[x] += siz[y];
+    f[y] = x;
+    l[x] = std::min(l[x], l[y]);
+    r[x] = std::max(r[x], r[y]);
+
+    return true;
+  }
+  int get_left(int x) { return l[leader(x)]; }
+  int get_right(int x) { return r[leader(x)]; }
+  int size(int x) { return siz[leader(x)]; }
+};
+
 // credit 草莓奶昔
 struct UnionFindRange {
   int part;
@@ -38,7 +66,7 @@ struct UnionFindRange {
   }
 
   bool unionSets(int x, int y,
-                 const std::function<void(int, int)> &beforeMerge = nullptr) {
+                 const std::function<void(int, int)>& beforeMerge = nullptr) {
     if (x < y) {
       std::swap(x, y);
     }
@@ -57,7 +85,7 @@ struct UnionFindRange {
   }
 
   int unionRange(int left, int right,
-                 const std::function<void(int, int)> &beforeMerge = nullptr) {
+                 const std::function<void(int, int)>& beforeMerge = nullptr) {
     if (left >= right) {
       return 0;
     }
