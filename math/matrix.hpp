@@ -1,4 +1,3 @@
-
 template <class T>
 struct Matrix {
   std::vector<std::vector<T>> A;
@@ -7,7 +6,7 @@ struct Matrix {
 
   Matrix(int n, int m) : A(n, std::vector<T>(m, 0)) {}
 
-  Matrix(int n) : A(n, std::vector<T>(n, 0)){};
+  Matrix(int n) : A(n, std::vector<T>(n, 0)) {};
 
   int size() const {
     if (A.empty()) return 0;
@@ -19,9 +18,9 @@ struct Matrix {
 
   int width() const { return (A[0].size()); }
 
-  inline const std::vector<T> &operator[](int k) const { return (A.at(k)); }
+  inline const std::vector<T>& operator[](int k) const { return (A.at(k)); }
 
-  inline std::vector<T> &operator[](int k) { return (A.at(k)); }
+  inline std::vector<T>& operator[](int k) { return (A.at(k)); }
 
   static Matrix I(int n) {
     Matrix mat(n);
@@ -29,7 +28,7 @@ struct Matrix {
     return (mat);
   }
 
-  Matrix &operator+=(const Matrix &B) {
+  Matrix& operator+=(const Matrix& B) {
     int n = height(), m = width();
     assert(n == B.height() && m == B.width());
     for (int i = 0; i < n; i++)
@@ -37,7 +36,7 @@ struct Matrix {
     return (*this);
   }
 
-  Matrix &operator-=(const Matrix &B) {
+  Matrix& operator-=(const Matrix& B) {
     int n = height(), m = width();
     assert(n == B.height() && m == B.width());
     for (int i = 0; i < n; i++)
@@ -45,7 +44,7 @@ struct Matrix {
     return (*this);
   }
 
-  Matrix &operator*=(const Matrix &B) {
+  Matrix& operator*=(const Matrix& B) {
     int n = height(), m = B.width(), p = width();
     assert(p == B.height());
     std::vector<std::vector<T>> C(n, std::vector<T>(m, 0));
@@ -57,7 +56,7 @@ struct Matrix {
     return (*this);
   }
 
-  Matrix multiply_mod(const Matrix &A, const Matrix &B, long long mod) {
+  Matrix multiply_mod(const Matrix& A, const Matrix& B, long long mod) {
     int n = height(), m = B.width(), p = width();
     assert(p == B.height());
     Matrix C(n, m);
@@ -69,7 +68,7 @@ struct Matrix {
     return C;
   }
 
-  Matrix &operator^=(long long k) {
+  Matrix& operator^=(long long k) {
     Matrix B = Matrix::I(height());
     while (k > 0) {
       if (k & 1) B *= *this;
@@ -80,7 +79,7 @@ struct Matrix {
     return (*this);
   }
 
-  Matrix pow_mod(Matrix &A, long long k, long long mod) {
+  Matrix pow_mod(Matrix& A, long long k, long long mod) {
     Matrix B = Matrix::I(height());
     while (k > 0) {
       if (k & 1) B = multiply_mod(B, A, mod);
@@ -90,15 +89,38 @@ struct Matrix {
     return B;
   }
 
-  Matrix operator+(const Matrix &B) const { return (Matrix(*this) += B); }
+  template <typename Func>
+  Matrix power(long long k, const Matrix& unit, Func mult) const {
+    if (k == 0) return unit;
 
-  Matrix operator-(const Matrix &B) const { return (Matrix(*this) -= B); }
+    Matrix res;
+    Matrix base = *this;
+    bool initialized = false;
 
-  Matrix operator*(const Matrix &B) const { return (Matrix(*this) *= B); }
+    while (k > 0) {
+      if (k & 1) {
+        if (!initialized) {
+          res = base;
+          initialized = true;
+        } else {
+          res = mult(res, base);
+        }
+      }
+      base = mult(base, base);
+      k >>= 1;
+    }
+    return res;
+  }
+
+  Matrix operator+(const Matrix& B) const { return (Matrix(*this) += B); }
+
+  Matrix operator-(const Matrix& B) const { return (Matrix(*this) -= B); }
+
+  Matrix operator*(const Matrix& B) const { return (Matrix(*this) *= B); }
 
   Matrix operator^(const long long k) const { return (Matrix(*this) ^= k); }
 
-  friend ostream &operator<<(std::ostream &os, Matrix &p) {
+  friend std::ostream& operator<<(std::ostream& os, Matrix& p) {
     int n = p.height(), m = p.width();
     for (int i = 0; i < n; i++) {
       os << "[";
@@ -138,3 +160,25 @@ struct Matrix {
     return (ret);
   }
 };
+
+/*
+
+  auto min_plus_mul = [](const Matrix<int>& A, const Matrix<int>& B) {
+    Matrix<int> C((int)A.height(), (int)B.width());
+    for (int i = 0; i < A.height(); ++i) {
+      for (int j = 0; j < B.width(); ++j) {
+        C[i][j] = INF;
+      }
+    }
+    for (int k = 0; k < A.width(); ++k) {
+      for (int i = 0; i < A.height(); ++i) {
+        if (A[i][k] != INF) {
+          for (int j = 0; j < B.width(); ++j) {
+            C[i][j] = std::min(C[i][j], A[i][k] + B[k][j]);
+          }
+        }
+      }
+    }
+    return C;
+  };
+*/
