@@ -919,106 +919,34 @@ struct Matrix {
   }
 };
 
-template <typename T>
-struct FenwickTree {
-  std::vector<T> bit;
-  int n;
-
-  FenwickTree(int _n) : n(_n), bit(_n) {}
-
-  // prefix sum [0, r]
-  T sum(int r) {
-    T ret = 0;
-    for (; r >= 0; r = (r & (r + 1)) - 1) ret += bit[r];
-    return ret;
-  }
-
-  // range sum [l, r)
-  T sum(int l, int r) {
-    assert(l <= r);
-    return sum(r - 1) - sum(l - 1);
-  }
-
-  void add(int idx, T delta) {
-    for (; idx < n; idx = idx | (idx + 1)) bit[idx] += delta;
-  }
-
-  void set(int idx, T val) { add(idx, val - sum(idx, idx + 1)); }
-};
-
-// follow yosupo judge
-void arg_sort(std::vector<std::tuple<long long, long long, int>>& a) {
-  // 讨论 (0, 0)
-  auto get_region = [](long long x, long long y) -> int {
-    if (y < 0) return 0;             // (-pi, 0) : 第三、四象限及负 Y 轴
-    if (y == 0 && x >= 0) return 1;  // 0        : 正 X 轴及原点 (0,0)
-    if (y > 0) return 2;             // (0, pi)  : 第一、二象限及正 Y 轴
-    return 3;                        // pi       : 负 X 轴
-  };
-
-  std::ranges::sort(a, [get_region](const auto& u, const auto& v) {
-    auto [ux, uy, uidx] = u;
-    auto [vx, vy, vidx] = v;
-    int ru = get_region(ux, uy);
-    int rv = get_region(vx, vy);
-
-    // 1. 区域不同
-    if (ru != rv) return ru < rv;
-    // 2. 区域相同
-    long long cross = ux * vy - uy * vx;
-    if (cross != 0) return cross > 0;
-
-    // 3. 严格共线时（包括同为 (0,0)），按距离原点的长度升序
-    return ux * ux + uy * uy < vx * vx + vy * vy;
-  });
-}
 void solve() {
-  int n, q;
-  std::cin >> n >> q;
-  std::vector<std::tuple<long long, long long, int>> a(n);
-  for (int i = 0; i < n; i++) {
-    int x, y;
-    std::cin >> x >> y;
-    a[i] = {x, y, i};
-  }
-  arg_sort(a);
-  auto is_same_ray = [](const auto& u, const auto& v) {
-    auto [ux, uy, uidx] = u;
-    auto [vx, vy, vidx] = v;
-    return ux * vy == uy * vx && ux * vx + uy * vy > 0;
-  };
-  std::vector<int> cnt;
-  std::vector<int> p2cnt(n);
-  int cur_ray_idx = -1;
-  for (int i = 0; i < n; i++) {
-    if (i == 0 || !is_same_ray(a[i], a[i - 1])) {
-      cnt.push_back(1);
-      cur_ray_idx++;
-    } else {
-      cnt.back()++;
+  int n, l, r;
+  std::cin >> n >> l >> r;
+  std::vector<long long> a(n);
+  for (int i = 0; i < n; i++) std::cin >> a[i];
+  std::vector C(n + 1, std::vector<long long>(n + 1));
+  for (int i = 0; i <= n; i++) {
+    C[i][0] = 1;
+    for (int j = 1; j <= i; j++) {
+      C[i][j] = C[i - 1][j - 1] + C[i - 1][j];
     }
-    auto [x, y, idx] = a[i];
-    p2cnt[idx] = cur_ray_idx;
   }
-  int m = cnt.size();
-  std::vector<int> pre(m + 1);
-  for (int i = 0; i < m; i++) {
-    pre[i + 1] = pre[i] + cnt[i];
+  std::ranges::sort(a, std::greater<long long>());  
+  long long sum_a = std::ranges::fold_left(a | std::views::take(l), 0LL, std::plus{});
+  std::cout << std::fixed << std::setprecision(10) << (double)sum_a / l << "\n";
+  long long target = a[l - 1];
+  int total = std::ranges::count(a, target);
+  int less = std::ranges::count(a | std::views::take(l), target);
+  long long ans = 0;
+  if (a[0] > target) {
+    ans += C[total][less];
+  } else {
+    for (int i = less; i <= r; i++) {
+      ans += C[total][i]; 
+    }
   }
-  for (int i = 0; i < q; i++) {
-    int l, r;
-    std::cin >> l >> r;
-    l--;
-    r--;
-    int u = p2cnt[l];
-    int v = p2cnt[r];
+  std::cout << ans << "\n";
 
-    if (u >= v) {
-      std::cout << pre[u + 1] - pre[v] << "\n";
-    } else {
-      std::cout << pre[u + 1] + pre[m] - pre[v] << "\n";
-    }
-  }
 }
 
 int main() {
