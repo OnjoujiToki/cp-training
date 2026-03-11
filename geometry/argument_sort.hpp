@@ -33,12 +33,33 @@ void arg_sort(std::vector<std::tuple<long long, long long, int>>& a) {
 }
 
 /*
+long long cross(long long ax, long long ay, long long bx, long long by) {
+  return ax * by - ay * bx;
+}
+
+long long dot(long long ax, long long ay, long long bx, long long by) {
+  return ax * bx + ay * by;
+}
+
+// 从 a 逆时针转到 b 的角是否严格小于 pi
+bool ok(long long ax, long long ay, long long bx, long long by) {
+  long long c = cross(ax, ay, bx, by);
+  if (c > 0) return true;
+  if (c < 0) return false;
+  return dot(ax, ay, bx, by) > 0;  // 同向可以，反向(=pi)不行
+}
+*/
+
+/*
 叉积/点积判断两点共线/象限
   auto is_same_line = [](const auto& u, const auto& v) {
     auto [ux, uy, uidx] = u;
     auto [vx, vy, vidx] = v;
     return ux * vy == uy * vx && ux * vx + uy * vy > 0;
   };
+
+
+
 
 */
 #endif
