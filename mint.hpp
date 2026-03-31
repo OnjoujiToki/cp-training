@@ -548,3 +548,6 @@ template <class T>
 using is_dynamic_modint_t = std::enable_if_t<is_dynamic_modint<T>::value>;
 
 }  // namespace internal
+
+
+using mint = modint1000000007;
